@@ -1,0 +1,49 @@
+version: '1.0'
+
+networks:
+  elknw:
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+    networks:
+      - elknw
+    environment:
+      # - ES_JAVA_OPTS="-Xms512m -Xmx512m"
+      - discovery.type=single-node
+
+  mongo:
+    image: mongo:4.4
+    container_name: mongo_elk
+    networks:
+      - elknw
+
+  graylog:
+    image: graylog/graylog:4.3.3
+    ports:
+      - '9000:9000'
+      - '12501:12501/udp'
+      - '1514:1514'
+    environment:
+      GRAYLOG_HTTP_EXTERNAL_URI: 'http://127.0.0.1:9000/'
+      GRAYLOG_PASSWORD_SECRET: 'forpasswordencryption'
+      GRAYLOG_ROOT_PASSWORD_SHA2: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
+    container_name: graylog
+    networks:
+      - elknw
+    depends_on:
+      - elasticsearch
+      - mongo
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.2.0
+    container_name: kibana
+    ports:
+      - 5601:5601
+    networks:
+      - elknw
+    depends_on:
+      - elasticsearch
